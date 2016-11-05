@@ -23,8 +23,12 @@ import id.sch.smktelkom_mlg.learn.recyclerview3.model.Hotel;
 public class MainActivity extends AppCompatActivity implements HotelAdapter.IHotelAdapter {
 
     public static final String HOTEL = "hotel";
+    public static final int _REQUEST_CODE_ADD = 88;
+    public static final int REQUEST_CODE = 88;
+    public static final int REQUEST_CODE_EDIT = 99;
     ArrayList<Hotel> mList = new ArrayList<>();
     HotelAdapter mAdapter;
+    int itemPos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +41,7 @@ public class MainActivity extends AppCompatActivity implements HotelAdapter.IHot
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                goAdd();
             }
         });
 
@@ -49,6 +52,10 @@ public class MainActivity extends AppCompatActivity implements HotelAdapter.IHot
         recyclerView.setAdapter(mAdapter);
 
         fillData();
+    }
+
+    private void goAdd() {
+        startActivityForResult(new Intent(this, InputActivity.class), REQUEST_CODE);
     }
 
     private void fillData() {
@@ -102,5 +109,53 @@ public class MainActivity extends AppCompatActivity implements HotelAdapter.IHot
         Intent intent = new Intent(this, DetailActivity.class);
         intent.putExtra(HOTEL, mList.get(pos));
         startActivity(intent);
+    }
+
+    @Override
+    public void doEdit(int pos) {
+        itemPos = pos;
+        Intent intent = new Intent(this, InputActivity.class);
+        intent.putExtra(HOTEL, mList.get(pos));
+        startActivityForResult(intent, REQUEST_CODE_EDIT);
+    }
+
+    @Override
+    public void doDelete(int pos) {
+        itemPos = pos;
+        final Hotel hotel = mList.get(pos);
+        mList.remove(itemPos);
+        mAdapter.notifyDataSetChanged();
+        Snackbar.make(findViewById(R.id.fab), hotel.judul + " Terhapus", Snackbar.LENGTH_SHORT).setAction("UNDO", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mList.add(itemPos, hotel);
+                mAdapter.notifyDataSetChanged();
+            }
+        }).show();
+    }
+
+    @Override
+    public void doFav(int pos) {
+
+    }
+
+    @Override
+    public void doShare(int pos) {
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            Hotel hotel = (Hotel) data.getSerializableExtra(HOTEL);
+            mList.add(hotel);
+            mAdapter.notifyDataSetChanged();
+        } else if (requestCode == REQUEST_CODE_EDIT && resultCode == RESULT_OK) {
+            Hotel hotel = (Hotel) data.getSerializableExtra(HOTEL);
+            mList.remove(itemPos);
+            mList.add(itemPos, hotel);
+            mAdapter.notifyDataSetChanged();
+        }
     }
 }
